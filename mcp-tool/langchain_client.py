@@ -15,7 +15,24 @@ llm = ChatOpenAI()
 
 
 async def main():
-    print("Starting multi-server client...")
+    client = MultiServerMCPClient( 
+        {
+            "math": {
+                "command": "python",
+                "args": ["C://Users//user//Desktop//learning_mcp//mcp-tool//servers//math_server.py"],
+                "transport": "stdio",
+            },
+            "weather": {
+                "url": "http://localhost:8000/sse",
+                "transport": "sse",
+            },
+        }
+    )
+    tools = await client.get_tools()
+    agent = create_react_agent(llm, tools)
+    # result = await agent.ainvoke({"messages": "What is 2 + 2?"})
+    result = await agent.ainvoke({"messages": "What is the weather in New York?"})
+    print(result["messages"][-1].content)
 
 
 if __name__ == "__main__":
