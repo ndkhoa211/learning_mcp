@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Read(//c/Users/user/AppData/Roaming/Claude/logs/**)",
+      "Read(//c/Users/user/AppData/Roaming/Claude/**)"
     ],
     "deny": [],
     "ask": []
