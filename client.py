@@ -90,7 +90,7 @@ async def create_research_agent():
     graph_builder.add_node("chat_node", chat_node)
     graph_builder.add_node("tool_node", ToolNode(tools=tools))
 
-    graph_builder.add_edges(START, "chat_node")
+    graph_builder.add_edge(START, "chat_node")
     graph_builder.add_conditional_edges(
         "chat_node",
         tools_condition, # decide whether to use tool (return "tools") in ToolNode or not (return "__end__")
@@ -99,3 +99,76 @@ async def create_research_agent():
     graph_builder.add_edge("tool_node", "chat_node")
 
     return graph_builder.compile(checkpointer=MemorySaver()), tools
+
+
+
+
+
+async def main():
+    """Main function to run the research assistant."""
+    
+    print("🔬 Research Assistant with Firecrawl & RAG")
+    print("=" * 50)
+    
+    config = {"configurable": {"thread_id": "research_session"}} # for persistant in-memory
+    
+    try:
+        # Create the research agent
+        agent, tools = await create_research_agent()
+        
+        # Display available tools
+        print("\n📚 Available Tools:")
+        for tool in tools:
+            print(f"  • {tool.name}")
+        
+        print("\n💡 Example commands:")
+        print("  • 'Research the latest developments in AI agents'")
+        print("  • 'Save this research to topic: ai_agents'") 
+        print("  • 'Search my previous research on machine learning'")
+        print("  • 'What topics have I researched?'")
+        print("  • 'Scrape https://example.com and save key insights'")
+        
+        print("\n" + "=" * 50)
+        print("Type 'quit' or 'exit' to end the session\n")
+        
+        # Main interaction loop
+        while True:
+            try:
+                user_input = input("🤔 You: ").strip()
+                
+                if user_input.lower() in ['quit', 'exit', 'bye']:
+                    print("👋 Goodbye! Happy researching!")
+                    break
+                
+                if not user_input:
+                    continue
+                
+                print("🤖 Assistant (Please wait...): ", end="", flush=True)
+                
+                # Get response from agent
+                response = await agent.ainvoke(
+                    {"messages": [{"role": "user", "content": user_input}]},
+                    config=config
+                )
+                
+                # Print the response
+                assistant_message = response["messages"][-1].content
+                print(assistant_message)
+                print()
+                
+            except KeyboardInterrupt:
+                print("\n\n👋 Session interrupted. Goodbye!")
+                break
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                print("Please try again or type 'quit' to exit.\n")
+    
+    except Exception as e:
+        print(f"❌ Failed to start research assistant: {e}")
+        print("Please check your API keys and server configuration.")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+# https://smith.langchain.com/o/856312b1-7816-4389-80cb-b01e398655be/?paginationModel=%7B%22pageIndex%22%3A0%2C%22pageSize%22%3A5%7D
