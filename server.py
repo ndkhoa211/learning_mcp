@@ -42,6 +42,28 @@ embeddings = OllamaEmbeddings(
 
 
 # ----- UTILITY FUNCTIONS -----
+# 0 - New validation utility
+def sanitize_topic_name(topic: str) -> str:
+    """
+    Sanitize topic name for filesystem use.
+    Replaces spaces and special characters with underscores.
+    """
+    # Replace spaces and special characters with underscores
+    sanitized = "".join(c if c.isalnum() or c in "._-" else "_" for c in topic)
+    # Remove consecutive underscores
+    while "__" in sanitized:
+        sanitized = sanitized.replace("__", "_")
+    # Strip leading/trailing underscores
+    sanitized = sanitized.strip("_")
+    # Limit length to 100 characters
+    if len(sanitized) > 100:
+        sanitized = sanitized[:100]
+    # Ensure it's not empty
+    if not sanitized:
+        sanitized = "default"
+    return sanitized
+
+
 # 1
 def get_content_hash(content: str) -> str:
     """Generate a hash for content to check for duplication."""
@@ -95,6 +117,43 @@ def save_research_data(content: List[str], topic: str = "default") -> str:
         topic: Topic name for organizing the data (creates separate DB)
     """
     try:
+        # ===== INPUT VALIDATION =====
+
+        # Validate content parameter
+        if content is None:
+            return "Error: 'content' parameter is required and cannot be None"
+
+        if not isinstance(content, list):
+            content_type = type(content).__name__
+            return f"Error: 'content' must be a list, received {content_type}. If you see 'dict', the parameter may not have been properly parsed by the MCP client."
+
+        if len(content) == 0:
+            return "Error: 'content' list is empty. Please provide at least one string to save."
+
+        # Validate each content item
+        invalid_items = []
+        for i, item in enumerate(content):
+            if not isinstance(item, str):
+                invalid_items.append(f"  - Item {i}: expected str, got {type(item).__name__}")
+            elif len(item) == 0:
+                invalid_items.append(f"  - Item {i}: empty string")
+            elif len(item) > 50000:  # Reasonable limit for embedding
+                invalid_items.append(f"  - Item {i}: too long ({len(item)} chars, max 50000)")
+
+        if invalid_items:
+            return f"Error: Invalid items in 'content' list:\n" + "\n".join(invalid_items)
+
+        # Validate and sanitize topic name
+        original_topic = topic
+        topic = sanitize_topic_name(topic)
+
+        if topic != original_topic:
+            info_msg = f"Note: Topic name sanitized from '{original_topic}' to '{topic}' (spaces/special chars replaced with underscores)\n"
+        else:
+            info_msg = ""
+
+        # ===== MAIN LOGIC =====
+
         topic_path = CHROMA_DB_ROOT / topic
         topic_path.mkdir(parents=True, exist_ok=True)
 
@@ -112,7 +171,7 @@ def save_research_data(content: List[str], topic: str = "default") -> str:
                 new_hashes.add(content_hash)
 
         if not new_content:
-            return f"No new content so save = all {len(content)} documents already exist in topic: {topic}"
+            return f"{info_msg}No new content to save - all {len(content)} documents already exist in topic: {topic}"
 
         # Get vectorstore for this topic
         vectorstore = get_vectorstore(topic)
@@ -139,10 +198,10 @@ def save_research_data(content: List[str], topic: str = "default") -> str:
         # Save updated content hashes
         save_content_hashes(topic_path, new_hashes)
 
-        return f"Successfully saved {len(new_content)} new documents to topic: {topic} (skipped {len(content) - len(new_content)} duplicates)"
+        return f"{info_msg}Successfully saved {len(new_content)} new documents to topic: {topic} (skipped {len(content) - len(new_content)} duplicates)"
 
     except Exception as e:
-        return f"Error saving research data: {str(e)}"
+        return f"Error saving research data: {str(e)}\nContent type: {type(content)}, Topic: {topic}"
 
 
 # 2
@@ -156,6 +215,9 @@ def search_research_data(query: str, topic: str = "default", max_results: int = 
         max_results: Maximum number of results to return
     """
     try:
+        # Sanitize topic name
+        topic = sanitize_topic_name(topic)
+
         topic_path = CHROMA_DB_ROOT / topic
 
         if not topic_path.exists():
@@ -238,6 +300,9 @@ def delete_research_topic(topic: str) -> str:
         topic: Topic name to delete
     """
     try:
+        # Sanitize topic name
+        topic = sanitize_topic_name(topic)
+
         topic_path = CHROMA_DB_ROOT / topic
 
         if not topic_path.exists():
@@ -268,6 +333,9 @@ def get_topic_info(topic: str) -> str:
         topic: Topic name to get info for
     """
     try:
+        # Sanitize topic name
+        topic = sanitize_topic_name(topic)
+
         topic_path = CHROMA_DB_ROOT / topic
 
         if not topic_path.exists():
