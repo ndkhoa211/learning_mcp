@@ -23,7 +23,7 @@ from mcp.server.fastmcp import FastMCP
 
 current_dir = Path(__file__).parent.absolute()
 # ----- CONFIGURATION -----
-CHROMA_DB_ROOT = os.path.join(current_dir, "research_chroma_dbs")
+CHROMA_DB_ROOT = current_dir / "research_chroma_dbs"
 OLLAMA_BASE_URL = "http://localhost:11434"
 EMBED_MODEL = "nomic-embed-text"
 
