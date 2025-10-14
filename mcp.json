@@ -1,26 +1,24 @@
 {
-  "research_server": {
-    "research-assistant": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "c:\\Users\\user\\Desktop\\learning_mcp",
-        "run",
-        "server.py"
-      ],
-      "transport": "stdio",
-      "env": {
-        "OLLAMA_BASE_URL": "http://localhost:11434",
-        "EMBED_MODEL": "nomic-embed-text"
-      }
-    },
-    "firecrawl-server": {
-      "command": "npx",
-      "args": ["-y", "firecrawl-mcp"],
-      "transport": "stdio",
-      "env": {
-        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
-      }
+  "research-assistant": {
+    "command": "uv",
+    "args": [
+      "--directory",
+      "c:\\Users\\user\\Desktop\\learning_mcp",
+      "run",
+      "server.py"
+    ],
+    "transport": "stdio",
+    "env": {
+      "OLLAMA_BASE_URL": "http://localhost:11434",
+      "EMBED_MODEL": "nomic-embed-text"
+    }
+  },
+  "firecrawl_server": {
+    "command": "npx",
+    "args": ["-y", "firecrawl-mcp"],
+    "transport": "stdio",
+    "env": {
+      "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
     }
   }
 }
