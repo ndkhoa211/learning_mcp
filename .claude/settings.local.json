@@ -3,7 +3,9 @@
     "allow": [
       "Bash(echo:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Read(//c/Users/user/AppData/Roaming/Claude/**)"
     ],
     "deny": [],
     "ask": []
